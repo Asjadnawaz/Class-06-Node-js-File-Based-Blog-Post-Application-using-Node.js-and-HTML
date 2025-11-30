@@ -1,48 +1,73 @@
-import http from "http";
-import fs from "fs";
+// Import required modules
+import http from "http"; // For creating HTTP server
+import fs from "fs";     // For file read/write operations
 
+// Create the HTTP server
 const server = http.createServer((req, res) => {
 
-  // Serve frontend file
+  // -------------------------------
+  // Serve Frontend HTML file
+  // -------------------------------
   if (req.url == "/" && req.method == "GET") {
     fs.readFile("./index.html", (err, data) => {
-      if (err) return res.end("Error Loading Home Page");
+      if (err) {
+        // Send error message if HTML file not found
+        return res.end("Error Loading Home Page");
+      }
+
+      // Set content type and send HTML file
       res.writeHead(200, { "Content-Type": "text/html" });
       res.end(data);
     });
     return;
   }
 
-  // GET all posts
+  // -------------------------------
+  // Get All Posts (Read from JSON)
+  // -------------------------------
   if (req.url == "/posts" && req.method == "GET") {
+    // Read posts from data.json
     const posts = fs.readFileSync("./data.json", "utf-8");
+
+    // Send JSON response
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(posts);
     return;
   }
 
-  // CREATE post
+  // -------------------------------
+  // Create a New Post
+  // -------------------------------
   if (req.url == "/create-post" && req.method == "POST") {
     let data = "";
 
+    // Collect data from frontend (request body)
     req.on("data", (chunk) => {
         data += chunk;    
     });
 
+    // After receiving all data
     req.on("end", () => {
+      // Parse JSON data sent from frontend
       const { title, content } = JSON.parse(data);   
+
+      // Read existing posts from data.json
       const posts = JSON.parse(fs.readFileSync("./data.json", "utf-8"));
 
+      // Create new post object
       const newpost = {
-        id: new Date().getMilliseconds(),
+        id: new Date().getMilliseconds(), // Unique ID based on milliseconds
         title,
         content
       };
 
+      // Add new post to posts array
       posts.push(newpost);
       
+      // Save updated posts array back to data.json
       fs.writeFileSync("./data.json", JSON.stringify(posts, null, 2));
 
+      // Send success response
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ message: "Post Created!" }));
     });
@@ -50,35 +75,41 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // DELETE post
+  // -------------------------------
+  // Delete a Post
+  // -------------------------------
+  if (req.url == "/delete-post" && req.method == "POST") {
+    let data = '';
 
-    if (req.url == "/delete-post" && req.method == "POST") {
-        let data = '';
-        req.on("data", (chunk) => data += chunk);
-        req.on("end", () => {
-            const {id} = JSON.parse(data);
+    // Collect post ID to delete
+    req.on("data", (chunk) => data += chunk);
 
-            let posts = JSON.parse(fs.readFileSync("./data.json", "utf-8"));
+    req.on("end", () => {
+        // Parse the ID from request
+        const { id } = JSON.parse(data);
 
-            posts = posts.filter((p) => p.id != id);
+        // Read all posts
+        let posts = JSON.parse(fs.readFileSync("./data.json", "utf-8"));
 
-            fs.writeFileSync("./data.json", JSON.stringify(posts, null, 2));
-        });
+        // Filter out the post with the given ID
+        posts = posts.filter((p) => p.id != id);
 
-        res.writeHead(200, {"Content-Type": "application/json"});
-        res.end(JSON.stringify({message: "Post Deleted"}));
+        // Save updated posts array back to data.json
+        fs.writeFileSync("./data.json", JSON.stringify(posts, null, 2));
+    });
 
-        return;
-    }
+    // Send success response
+    res.writeHead(200, {"Content-Type": "application/json"});
+    res.end(JSON.stringify({message: "Post Deleted"}));
 
-    }); 
+    return;
+  }
 
+}); // End of server.createServer
 
-
-// Start Server
+// -------------------------------
+// Start the Server
+// -------------------------------
 server.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
 });
-
-
-
