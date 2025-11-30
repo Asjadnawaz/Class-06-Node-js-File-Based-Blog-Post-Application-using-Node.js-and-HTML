@@ -3,28 +3,35 @@
 <head>
   <title>Posts App</title>
 
-  <!-- Tailwind CDN -->
+  <!-- Tailwind CSS CDN for styling -->
   <script src="https://cdn.tailwindcss.com"></script>
 
 </head>
 <body class="bg-gray-200 min-h-screen flex justify-center p-6">
 
+  <!-- Main container -->
   <div class="w-full max-w-2xl">
 
-    <!-- Create Post Card -->
+    <!-- ========================= -->
+    <!-- Create Post Section -->
+    <!-- ========================= -->
     <div class="bg-white shadow-lg rounded-2xl p-6 mb-8">
+      <!-- Section Title -->
       <h2 class="text-2xl font-bold mb-4 text-gray-800">Create a Post</h2>
 
+      <!-- Input for Post Title -->
       <input id="title"
         placeholder="Enter Title"
         class="w-full p-3 border rounded-lg mb-3 focus:ring-2 focus:ring-blue-500 outline-none"
       >
 
+      <!-- Textarea for Post Content -->
       <textarea id="content"
         placeholder="Enter Content"
         class="w-full p-3 border rounded-lg mb-3 focus:ring-2 focus:ring-blue-500 outline-none"
       ></textarea>
 
+      <!-- Create Post Button -->
       <button
         onclick="createPost()"
         class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
@@ -33,28 +40,37 @@
       </button>
     </div>
 
-    <!-- Posts List -->
+    <!-- ========================= -->
+    <!-- All Posts Section -->
+    <!-- ========================= -->
     <h2 class="text-2xl font-bold mb-4 text-gray-800">All Posts</h2>
 
+    <!-- Container where posts will be dynamically displayed -->
     <div id="posts" class="space-y-4"></div>
 
   </div>
 
   <script>
+    // --------------------------
+    // Function: Load All Posts
+    // --------------------------
     async function loadPosts() {
+      // Fetch posts from backend API
       const res = await fetch("/posts");
       const posts = await res.json();
+
+      // Get posts container div
       const container = document.getElementById("posts");
-      container.innerHTML = "";
+      container.innerHTML = ""; // Clear previous posts
 
- 
-
-        posts.forEach(p => {
+      // Loop through each post and display it
+      posts.forEach(p => {
         container.innerHTML += `
           <div class="bg-white shadow-md rounded-xl p-5">
             <h3 class="text-xl font-semibold text-gray-900">${p.title}</h3>
             <p class="text-gray-700 mt-2">${p.content}</p>
 
+            <!-- Delete Button for Each Post -->
             <button onclick="deletePost(${p.id})"
               class="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
               Delete
@@ -62,38 +78,50 @@
           </div>
         `;
       });
+    }
 
-      }
-
-
-
+    // --------------------------
+    // Function: Create a Post
+    // --------------------------
     async function createPost() {
+      // Get values from input fields
       const title = document.getElementById("title").value;
       const content = document.getElementById("content").value;
 
+      // Send POST request to backend to create a new post
       await fetch("/create-post", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" }, // Important for JSON parsing
         body: JSON.stringify({ title, content })
       });
 
+      // Clear input fields after creating post
       document.getElementById("title").value = "";
       document.getElementById("content").value = "";
 
+      // Reload posts to show the new post
       loadPosts();
     }
 
+    // --------------------------
+    // Function: Delete a Post
+    // --------------------------
     async function deletePost(id) {
+      // Send POST request to backend to delete the post with given ID
       await fetch("/delete-post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id })
       });
 
+      // Reload posts to reflect deletion
       loadPosts();
     }
 
-    loadPosts();
+    // --------------------------
+    // Initial Load
+    // --------------------------
+    loadPosts(); // Load all posts when page loads
   </script>
 
 </body>
